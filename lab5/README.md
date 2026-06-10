@@ -23,3 +23,44 @@ Precision-recall curves focus on the positive class. They are often more informa
 Accuracy depends on the classification threshold. A threshold of 0.5 is natural when probabilities are calibrated and class costs are equal. Balanced accuracy gives equal weight to both classes, so it is more appropriate under class imbalance.
 
 If false positives and false negatives have different costs, the threshold should be shifted toward reducing the more expensive mistake.
+
+## Key Formulas
+
+Accuracy:
+
+```text
+Accuracy = (TP + TN) / (TP + TN + FP + FN)
+```
+
+Balanced accuracy:
+
+```text
+Balanced accuracy = 0.5 * (TP / (TP + FN) + TN / (TN + FP))
+```
+
+Precision and recall:
+
+```text
+Precision = TP / (TP + FP)
+Recall = TP / (TP + FN)
+```
+
+Bootstrap 0.632 estimate:
+
+```text
+Err_0.632 = 0.368 * Err_train + 0.632 * Err_bootstrap
+```
+
+Threshold classification rule:
+
+```text
+y_hat = 1 if P(Y = 1 | X = x) > t, else 0
+```
+
+## Hyperparameters and Failure Modes
+
+For cross-validation, the number of folds controls the bias-variance tradeoff of the estimate. Too few folds can be pessimistic because training sets are smaller. Too many folds can be computationally expensive and high variance.
+
+For bootstrap, the number of bootstrap repetitions controls Monte Carlo stability. Too few repetitions can give noisy estimates.
+
+Accuracy can be misleading under class imbalance. ROC AUC can also look good when the positive class is rare, while precision-recall curves may reveal poor positive-class precision.

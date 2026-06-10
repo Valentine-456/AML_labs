@@ -23,3 +23,39 @@ The shadow variables provide a reference distribution for noise. Comparing again
 ## Prediction After Selection
 
 Selecting too few features can miss signal and increase bias. Selecting too many features can add noise and increase variance. The best number of selected features depends on sample size, signal strength, and model type.
+
+## Key Formulas
+
+Dataset 1 signal rule:
+
+```text
+Y = 1 if sum_{j=1}^k X_j^2 > median(ChiSquare_k)
+```
+
+Dataset 2 signal rule:
+
+```text
+Y = 1 if sum_{j=1}^k |X_j| > k
+```
+
+Permutation importance:
+
+```text
+Importance_j = Score(model, X, y) - Score(model, X with feature j shuffled, y)
+```
+
+Feature recovery probability:
+
+```text
+P(success) ~= number of successful simulations / number of simulations
+```
+
+## Hyperparameters and Failure Modes
+
+Important random forest hyperparameters for feature importance include `n_estimators`, `max_features`, `max_depth`, and `min_samples_leaf`.
+
+Too few trees make feature rankings noisy. Very deep trees can overfit and inflate importance for noisy variables. Correlated features can split importance between each other, making individual rankings harder to interpret.
+
+Permutation importance depends on the evaluation set. If the validation set is small, importance estimates can be noisy. If features are strongly correlated, shuffling one feature may underestimate its true importance because correlated features still carry similar information.
+
+For Boruta, the number of random forest runs and shadow-variable comparison rule affect stability. Too few repetitions can produce unstable selected sets.

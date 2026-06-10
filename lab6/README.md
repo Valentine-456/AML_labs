@@ -23,3 +23,46 @@ Random forest extends bagging by also randomizing the features considered at eac
 ## Main Differences
 
 A single tree is interpretable but unstable. Bagging stabilizes trees through averaging. Random forest usually improves further by reducing correlation between trees.
+
+## Key Formulas
+
+Gini impurity:
+
+```text
+Gini(node) = 1 - sum_k p_k^2
+```
+
+Entropy:
+
+```text
+Entropy(node) = - sum_k p_k log(p_k)
+```
+
+Information gain:
+
+```text
+Gain = Impurity(parent)
+       - sum_children (n_child / n_parent) Impurity(child)
+```
+
+Cost-complexity pruning objective:
+
+```text
+R_alpha(T) = R(T) + alpha * |T|
+```
+
+Bagging prediction:
+
+```text
+y_hat = majority_vote(f_1(x), ..., f_B(x))
+```
+
+## Hyperparameters and Failure Modes
+
+Important tree hyperparameters include `max_depth`, `min_samples_split`, `min_samples_leaf`, `criterion`, and `ccp_alpha`.
+
+If a tree is too deep, it can overfit noise. If it is too shallow, it underfits. If `min_samples_leaf` is too small, terminal regions can be unstable. If `ccp_alpha` is too large, pruning removes useful structure.
+
+For bagging and random forests, `n_estimators` controls the number of trees. Too few trees gives unstable ensemble estimates. Very many trees improve stability but increase computation.
+
+For random forests, `max_features` controls tree decorrelation. Too large makes trees similar to bagging. Too small can make individual trees weak.

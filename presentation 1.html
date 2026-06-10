@@ -1,0 +1,1551 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AML Project 2 — Cost-Sensitive Predictive Modeling</title>
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css"
+              integrity="sha384-AJKv9Ui5SfA0VsFksFI9GuA1ztX9Ca3CLP6HGfX4YY/tYSVodC+PUszaQZFIlkuy" crossorigin="anonymous" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css"
+              integrity="sha384-YgvgKeZJykuztG+iQPoZHNZENTFZvOcOJ/uRzmJTje6GHYN9zAw+y5rx/L8MQKA/" crossorigin="anonymous" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css"
+              integrity="sha384-/TZMdZeq0ZGi4iePTHhOMXOkyv2f72ZcwmhAtOmSZlPkx+5qCOfyc/U1kjd5Su6S" crossorigin="anonymous" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css"
+              integrity="sha384-0rrWATPYzlkqxkUhsXu1QkrO6K3rq4d6FqJQhcCJ7jQcZhb6plkpODMjpoiAYidE" crossorigin="anonymous" />
+
+        <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"
+                integrity="sha384-qOkzR5Ke/XkQxuGVJ9hpFEpDlcoLtWwVYhnJf06cLIZa2vaIptSqaubivErzmD5O" crossorigin="anonymous"></script>
+        <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"
+                integrity="sha384-cCVCZkAjYNxaYKbM8lsArLznDF/SvMFr1jcZrvOpSTCa0W40ZAdLzHCEulnUa5i7" crossorigin="anonymous"></script>
+
+        <style>
+            /* ── Variables ─────────────────────────────────────────────────── */
+            :root {
+                --bg:        #f5f1ec;
+                --text:      #1c1814;
+                --muted:     #7a7268;
+                --orange:    #b83820;
+                --blue:      #2472a0;
+                --green:     #256a42;
+                --red:       #9a2020;
+                --purple:    #7060b0;
+                --rule:      rgba(0, 0, 0, 0.09);
+                --card:      rgba(0, 0, 0, 0.04);
+            }
+
+            /* ── Three.js canvas ───────────────────────────────────────────── */
+            #bg-canvas {
+                position: fixed;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 0;
+                pointer-events: none;
+            }
+
+            /* ── Reveal base ───────────────────────────────────────────────── */
+            .reveal-viewport, body { background: var(--bg) !important; }
+
+            .reveal {
+                font-family: Georgia, "Times New Roman", serif;
+                font-size: 26px;
+                background: transparent;
+                color: var(--text);
+                position: relative;
+                z-index: 1;
+            }
+
+            .reveal .slides section {
+                text-align: left;
+                box-sizing: border-box;
+                padding: 8px 28px;
+                background: transparent;
+            }
+
+            /* ── Headings ──────────────────────────────────────────────────── */
+            .reveal h1 {
+                font-family: Georgia, serif;
+                font-size: 1.9em;
+                font-weight: 700;
+                color: var(--text);
+                text-transform: none;
+                letter-spacing: -0.02em;
+                line-height: 1.15;
+                margin-bottom: 0.4em;
+            }
+
+            .reveal h2 {
+                font-family: Georgia, serif;
+                font-size: 1.25em;
+                font-weight: 700;
+                color: var(--text);
+                text-transform: none;
+                letter-spacing: -0.01em;
+                border-bottom: 1px solid var(--rule);
+                padding-bottom: 0.3em;
+                margin-bottom: 0.6em;
+            }
+
+            .reveal h3 {
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.75em;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                color: var(--orange);
+                margin-bottom: 0.4em;
+            }
+
+            /* ── Body text ─────────────────────────────────────────────────── */
+            .reveal p {
+                font-size: 0.76em;
+                line-height: 1.65;
+                color: #3a3430;
+            }
+
+            .reveal ul {
+                font-size: 0.74em;
+                line-height: 1.7;
+                list-style: none;
+                padding-left: 0;
+            }
+
+            .reveal ul li::before {
+                content: "–";
+                color: var(--muted);
+                margin-right: 0.5em;
+            }
+
+            /* ── Tables ────────────────────────────────────────────────────── */
+            .reveal table {
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.62em;
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            .reveal table th {
+                font-weight: 600;
+                color: var(--muted);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                font-size: 0.85em;
+                padding: 0.45em 0.8em;
+                border-bottom: 1px solid var(--rule);
+                background: none;
+                text-align: left;
+            }
+
+            .reveal table td {
+                padding: 0.38em 0.8em;
+                border-bottom: 1px solid var(--rule);
+                color: var(--text);
+            }
+
+            .reveal table tbody tr:last-child td { border-bottom: none; }
+
+            /* ── Code / formula ────────────────────────────────────────────── */
+            .reveal code {
+                font-family: "Courier New", monospace;
+                font-size: 0.88em;
+                background: rgba(0, 0, 0, 0.06);
+                padding: 0.1em 0.3em;
+                border-radius: 2px;
+                color: #2a1e18;
+            }
+
+            .formula {
+                font-family: "Courier New", monospace;
+                font-size: 0.68em;
+                background: rgba(0, 0, 0, 0.04);
+                border-left: 2px solid var(--orange);
+                padding: 0.55em 0.9em;
+                margin: 0.5em 0;
+                color: #2a1e18;
+                line-height: 1.6;
+            }
+
+            /* ── Layout helpers ────────────────────────────────────────────── */
+            .cols { display: grid; gap: 2em; align-items: start; }
+            .cols-2   { grid-template-columns: 1fr 1fr; }
+            .cols-3   { grid-template-columns: 1fr 1fr 1fr; }
+            .cols-60-40 { grid-template-columns: 1.5fr 1fr; }
+            .cols-40-60 { grid-template-columns: 1fr 1.5fr; }
+            .cols-55-45 { grid-template-columns: 1.2fr 1fr; }
+
+            /* ── Section label ─────────────────────────────────────────────── */
+            .section-label {
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.58em;
+                text-transform: uppercase;
+                letter-spacing: 0.14em;
+                color: var(--muted);
+                margin-bottom: 0.2em;
+            }
+
+            /* ── Big stat ──────────────────────────────────────────────────── */
+            .big-stat {
+                font-size: 2.8em;
+                font-weight: 700;
+                color: var(--orange);
+                line-height: 1;
+                font-family: Georgia, serif;
+            }
+            .big-stat-label {
+                font-size: 0.6em;
+                color: var(--muted);
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                margin-top: 0.1em;
+            }
+
+            /* ── Accent colors ─────────────────────────────────────────────── */
+            .accent  { color: var(--orange); }
+            .blue    { color: var(--blue); }
+            .green   { color: var(--green); }
+            .red     { color: var(--red); }
+            .muted   { color: var(--muted); }
+
+            /* ── Scheme cards ──────────────────────────────────────────────── */
+            .scheme {
+                padding: 0.55em 0;
+                border-top: 1px solid var(--rule);
+            }
+            .scheme:last-child { border-bottom: 1px solid var(--rule); }
+            .scheme-name {
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.65em;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                margin-bottom: 0.15em;
+            }
+            .scheme-body {
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.62em;
+                color: #5a5450;
+                line-height: 1.5;
+            }
+
+            /* ── Step list ─────────────────────────────────────────────────── */
+            .step {
+                display: flex;
+                gap: 0.8em;
+                margin: 0.45em 0;
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.68em;
+                align-items: baseline;
+            }
+            .step-n { color: var(--orange); font-weight: 700; min-width: 1.2em; }
+            .step-text { color: #3a3430; line-height: 1.5; }
+            .step-text code { font-size: 0.92em; }
+
+            /* ── Notes / callouts ──────────────────────────────────────────── */
+            .note {
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.6em;
+                color: var(--muted);
+                border-left: 2px solid var(--rule);
+                padding-left: 0.7em;
+                margin-top: 0.6em;
+                line-height: 1.55;
+            }
+            .note.warn { border-left-color: var(--red);   color: #7a3030; }
+            .note.good { border-left-color: var(--green); color: #2a5a38; }
+
+            /* ── Separator ─────────────────────────────────────────────────── */
+            .sep { border: none; border-top: 1px solid var(--rule); margin: 0.6em 0; }
+
+            /* ── Title slide ───────────────────────────────────────────────── */
+            .title-slide { padding-top: 54px !important; }
+            .title-slide h1 {
+                font-size: 2.2em;
+                margin-bottom: 0.3em;
+                max-width: 14em;
+            }
+            .title-meta {
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.62em;
+                color: var(--muted);
+                margin-top: 0.3em;
+                line-height: 2;
+            }
+            .title-rule {
+                width: 0;
+                height: 3px;
+                background: var(--orange);
+                margin: 0.8em 0;
+                animation: ruleGrow 0.8s ease-out 0.3s forwards;
+            }
+            @keyframes ruleGrow { to { width: 3em; } }
+
+            /* ── Highlight rows ────────────────────────────────────────────── */
+            tr.hl    td { color: var(--orange) !important; font-weight: 600; }
+            tr.hl-g  td { color: var(--green)  !important; font-weight: 600; }
+            tr.hl-r  td { color: var(--red)    !important; }
+
+            /* ── Progress / controls ───────────────────────────────────────── */
+            .reveal .progress { color: var(--orange); height: 2px; }
+            .reveal .controls { color: var(--muted); }
+
+            /* ── 2D chart containers ───────────────────────────────────────── */
+            .chart-2d {
+                width: 100%;
+                border-radius: 4px;
+                background: rgba(255, 255, 255, 0.6);
+                border: 1px solid var(--rule);
+                backdrop-filter: blur(4px);
+            }
+
+            /* ── Member cards (ensemble slide) ─────────────────────────────── */
+            .member {
+                background: rgba(255, 255, 255, 0.7);
+                border: 1px solid var(--rule);
+                border-radius: 4px;
+                padding: 0.5em 0.7em;
+                backdrop-filter: blur(4px);
+            }
+            .member-name {
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.65em;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-bottom: 0.2em;
+            }
+            .member-detail {
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.58em;
+                color: var(--muted);
+                line-height: 1.5;
+            }
+            .member-weight {
+                font-family: Georgia, serif;
+                font-size: 1.2em;
+                font-weight: 700;
+                float: right;
+                margin-top: -0.05em;
+            }
+
+            /* ── Profit waterfall ──────────────────────────────────────────── */
+            .profit-row {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 0.68em;
+                padding: 0.28em 0.6em;
+                border-radius: 3px;
+                margin: 0.2em 0;
+            }
+            .profit-row .val { font-weight: 700; min-width: 4.5em; text-align: right; }
+            .profit-row .lbl { color: var(--muted); font-size: 0.85em; }
+            .profit-pos { background: rgba(37, 106, 66, 0.08); color: var(--green); }
+            .profit-neg { background: rgba(154, 32, 32, 0.07); color: var(--red); }
+            .profit-sub { color: var(--muted); font-size: 0.9em; }
+            .profit-total {
+                background: rgba(184, 56, 32, 0.10);
+                color: var(--orange);
+                border-top: 1px solid rgba(184, 56, 32, 0.25);
+                margin-top: 0.3em;
+                padding-top: 0.35em;
+                font-size: 0.8em;
+            }
+
+            /* ── Confusion matrix tiles ────────────────────────────────────── */
+            .cm-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5em;
+            }
+            .cm-cell {
+                border-radius: 4px;
+                padding: 0.7em 0.8em;
+                text-align: center;
+                font-family: "Helvetica Neue", Arial, sans-serif;
+            }
+            .cm-label {
+                font-size: 0.55em;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                opacity: 0.7;
+                margin-bottom: 0.2em;
+            }
+            .cm-count {
+                font-family: Georgia, serif;
+                font-size: 1.5em;
+                font-weight: 700;
+                line-height: 1;
+            }
+            .cm-sub {
+                font-size: 0.52em;
+                opacity: 0.65;
+                margin-top: 0.2em;
+                line-height: 1.3;
+            }
+            .cm-tp {
+                background: rgba(37, 106, 66, 0.10);
+                border: 1px solid rgba(37, 106, 66, 0.28);
+                color: var(--green);
+            }
+            .cm-fn {
+                background: rgba(0,0,0,0.04);
+                border: 1px solid var(--rule);
+                color: var(--muted);
+            }
+            .cm-fp {
+                background: rgba(154, 32, 32, 0.08);
+                border: 1px solid rgba(154, 32, 32, 0.24);
+                color: var(--red);
+            }
+            .cm-tn {
+                background: rgba(0,0,0,0.04);
+                border: 1px solid var(--rule);
+                color: var(--muted);
+            }
+
+            /* ── Fragment animations ───────────────────────────────────────── */
+            .reveal .slides .fragment.fade-up {
+                transform: translateY(16px);
+                opacity: 0;
+                transition: transform 0.35s ease, opacity 0.35s ease;
+            }
+            .reveal .slides .fragment.fade-up.visible {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            /* Inline animate: stat counter */
+            @keyframes countUp {
+                from { opacity: 0; transform: scale(0.85); }
+                to   { opacity: 1; transform: scale(1); }
+            }
+            .stat-animated {
+                animation: countUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Three.js background canvas -->
+        <canvas id="bg-canvas"></canvas>
+
+        <div class="reveal">
+            <div class="slides">
+
+                <!-- ============================================================
+                     1. TITLE
+                     ============================================================ -->
+                <section class="title-slide">
+                    <div class="section-label">Advanced Machine Learning &nbsp;·&nbsp; WUT 2026</div>
+                    <h1>Cost-Sensitive<br />Predictive Modeling</h1>
+                    <div class="title-rule"></div>
+                    <div class="title-meta">
+                        500 anonymized features &nbsp;·&nbsp; 6-feature optimal subset<br />
+                        4-way rank-blend ensemble &nbsp;·&nbsp; semi-supervised pseudo-labeling<br />
+                        <strong style="color: var(--orange);">OOF €-score: €6,250</strong>
+                    </div>
+                    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 0.58em; color: #aaa098; margin-top: 1.4em; line-height: 2.2;">
+                        Esin Kutlu &nbsp;&nbsp;·&nbsp;&nbsp; Valentyn Bondarenko &nbsp;&nbsp;·&nbsp;&nbsp; Ljubomir Kolev
+                    </div>
+                    <aside class="notes">
+                        Person A. ~20 sec. "We're presenting Project 2 from Advanced Machine Learning. The task is contact targeting — given 5,000 customer records with 500 anonymized features, rank and pick the 1,000 most likely to convert, while paying for every feature column you buy. I'll cover the problem setup, the data, and how we arrived at our six features. Then my teammates walk through the modeling and results."
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     2. OBJECTIVE
+                     ============================================================ -->
+                <section>
+                    <div class="section-label">Problem</div>
+                    <h2>The objective</h2>
+
+                    <div class="cols cols-60-40">
+                        <div>
+                            <p style="font-size: 0.72em;">
+                                Pick at most <strong>1,000 customers</strong> to contact.
+                                Every contact is a bet: earn €10 if they convert, lose €5 if they don't.
+                                Each original feature column costs €200, paid once regardless of how many
+                                models you train on it.
+                            </p>
+
+                            <div class="formula" style="margin: 0.7em 0; font-size: 0.72em;">
+                                Score = 10 × TP &nbsp;−&nbsp; 5 × FP &nbsp;−&nbsp; 200 × k
+                            </div>
+
+                            <p style="font-size: 0.68em; color: var(--muted); margin-top: 0.3em;">
+                                k = number of original columns purchased. Derived features
+                                (e.g. x₁ + x₂) count as k = 2.
+                                The 1,000-contact cap means false negatives are invisible to the metric.
+                            </p>
+
+                            <hr class="sep" />
+
+                            <p style="font-size: 0.68em;">What the formula forces you to do:</p>
+                            <ul style="font-size: 0.67em;">
+                                <li class="fragment fade-up">Rank all 5,000 customers, cut at 1,000</li>
+                                <li class="fragment fade-up">Feature engineering is structurally penalized</li>
+                                <li class="fragment fade-up">Ensembling is free — same k, multiple models</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <p style="font-size: 0.65em; color: var(--muted);">Benchmarks</p>
+                            <table>
+                                <thead>
+                                    <tr><th>Scenario</th><th>€-score</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Random 1,000 pick (k=6)</td><td class="muted">€1,264</td></tr>
+                                    <tr><td>Oracle ceiling (k=6)</td><td class="green">≈ €24,480</td></tr>
+                                    <tr class="hl"><td>Our submission (k=6)</td><td>€6,250</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="note good" style="margin-top: 0.8em;">
+                                +394% over random &nbsp;·&nbsp; 26% of theoretical ceiling
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="notes">
+                        Person A. ~35 sec. "The scoring rule has three parts. €10 for each true positive, −€5 for each false positive, and a fixed −€200 per original column. The feature cost is paid once, so training four models on six columns costs the same as one model — that's the structural reason ensembling is attractive here. And because derived features like f(x1, x2) count as two columns, feature engineering almost never beats just picking the raw columns directly."
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     3. THE DATA
+                     ============================================================ -->
+                <section>
+                    <div class="section-label">Data</div>
+                    <h2>What we're working with</h2>
+
+                    <div class="cols cols-2">
+                        <div>
+                            <div class="scheme">
+                                <div class="scheme-name accent">Labeled training set</div>
+                                <div class="scheme-body">
+                                    5,000 rows &nbsp;·&nbsp; 500 features, all anonymized (V1–V500)<br />
+                                    Class balance: <strong>49.76%</strong> positive / 50.24% negative<br />
+                                    Two exact duplicates dropped: V175 ≡ V32 &nbsp;·&nbsp; V416 ≡ V160 → 498 active
+                                </div>
+                            </div>
+                            <div class="scheme">
+                                <div class="scheme-name blue">Unlabeled test set</div>
+                                <div class="scheme-body">
+                                    5,000 rows, same columns, no labels<br />
+                                    Adversarial-validation AUC: <strong>0.4975</strong><br />
+                                    Train and test are indistinguishable — no distribution shift
+                                </div>
+                            </div>
+                            <div class="scheme">
+                                <div class="scheme-name" style="color: var(--muted);">Signal ceiling</div>
+                                <div class="scheme-body">
+                                    Best individual-feature AUC across all 498: <strong>0.56</strong><br />
+                                    No feature is remotely decisive on its own.
+                                    Gains have to come from combining weak signals.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p style="font-size: 0.65em; color: var(--muted);">What anonymization means in practice</p>
+                            <ul style="font-size: 0.64em; margin-top: 0.4em;">
+                                <li class="fragment fade-up">No domain knowledge to exploit — feature names are V-numbers</li>
+                                <li class="fragment fade-up">No natural groupings to guide engineering</li>
+                                <li class="fragment fade-up">Selection is purely empirical, driven by OOF €-score</li>
+                                <li class="fragment fade-up">Models that bring their own priors (foundation models) get a structural edge</li>
+                            </ul>
+
+                            <hr class="sep" style="margin-top: 0.9em;" />
+
+                            <div style="display: flex; gap: 1.5em; margin-top: 0.5em;">
+                                <div>
+                                    <div class="big-stat">498</div>
+                                    <div class="big-stat-label">active features</div>
+                                </div>
+                                <div>
+                                    <div class="big-stat">0.56</div>
+                                    <div class="big-stat-label">signal ceiling (AUC)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="notes">
+                        Person A. ~35 sec. "5,000 training rows, 500 features — all named V1 through V500, no description of what they measure. Two pairs turned out to be exact duplicates, leaving 498 active. The best individual feature AUC is 0.56, barely above chance, so there's no single dominant predictor. The test set is equally well-behaved: an adversarial classifier that tries to tell train from test achieves 0.4975, essentially random, so train-test distribution shift isn't a lever here."
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     4. FEATURE SELECTION
+                     ============================================================ -->
+                <section>
+                    <div class="section-label">Feature selection</div>
+                    <h2>Finding the right k</h2>
+
+                    <div class="cols cols-55-45">
+                        <div>
+                            <p style="font-size: 0.7em;">
+                                Forward greedy search: add one feature at a time, keep what improves
+                                the OOF €-score, stop when the next best candidate can't cover its €200 cost.
+                            </p>
+
+                            <table style="margin-top: 0.4em;">
+                                <thead>
+                                    <tr><th>k</th><th>Features</th><th>OOF €-score</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>4</td><td>V160, V176, V255, V191</td><td class="muted">€5,054</td></tr>
+                                    <tr><td>5</td><td>+ V342</td><td class="muted">€5,451</td></tr>
+                                    <tr class="hl"><td>6</td><td>+ V380</td><td>€6,250</td></tr>
+                                </tbody>
+                            </table>
+
+                            <div class="note warn" style="margin-top: 0.6em;">
+                                The k=6 jump was not obvious. A basic XGBoost screen of 21
+                                candidate 6th features showed every single one making the score
+                                <em>worse</em> than k=5. The full pipeline reversed the verdict.
+                            </div>
+                        </div>
+
+                        <div>
+                            <p style="font-size: 0.65em; color: var(--muted);">Why the cheap screen misleads</p>
+
+                            <div class="step">
+                                <span class="step-n">1.</span>
+                                <span class="step-text fragment fade-up">XGBoost screen (k=6): all 21 candidates score <em>below</em> the k=5 baseline. Conclusion: "stop at k=5."</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-n">2.</span>
+                                <span class="step-text fragment fade-up">XGBoost at k=6 lacks the model capacity to benefit from the extra column. The screen is asking the wrong question.</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-n">3.</span>
+                                <span class="step-text fragment fade-up">Full pipeline (TabPFN + TabICL + CatBoost + RF): V380 at k=6 wins by <span class="accent">+€819</span> over the k=5 supervised baseline.</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-n">4.</span>
+                                <span class="step-text fragment fade-up">Rule: use a cheap proxy to shortlist candidates, never to bury them.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="notes">
+                        Person A. ~40 sec. "Forward greedy search by €-curve. k=4 to k=5: adding V342 gains +€397. k=5 to k=6 looked like it should stop — every candidate 6th feature tested with XGBoost came in below the k=5 baseline. Read at face value that says 'don't go to k=6.' But XGBoost at k=6 just doesn't have the model capacity to exploit a sixth column in this feature space. When we ran V380 through the full TabPFN+TabICL+CatBoost+RF ensemble, k=6 beat k=5 by over €800. The screen was answering the wrong question."
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     5. FOUNDATION MODELS — PHASE 1
+                     ============================================================ -->
+                <section>
+                    <div class="section-label">Phase 1 &nbsp;·&nbsp; €5,054 → €5,630</div>
+                    <h2>Foundation models — the first breakthrough</h2>
+
+                    <div class="cols cols-60-40">
+                        <div>
+                            <p style="font-size: 0.72em;">
+                                Traditional GBDTs plateau quickly on a small, fully anonymized dataset.
+                                Pre-trained tabular foundation models have seen millions of synthetic tables
+                                and start from a much better prior.
+                            </p>
+
+                            <table style="margin-top: 0.4em;">
+                                <thead>
+                                    <tr><th>Step</th><th>Model / approach</th><th>OOF €</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Baseline</td><td>XGB + LGBM + logistic (k=4)</td><td class="muted">€5,054</td></tr>
+                                    <tr><td>Grid search (144 configs)</td><td>tuned XGBoost depth/lr</td><td class="muted">€5,288</td></tr>
+                                    <tr><td>+ V342 (k=5)</td><td>forward feature search</td><td class="muted">€5,451</td></tr>
+                                    <tr><td>Stacking + calibration</td><td>logistic meta-learner</td><td class="muted">€5,520</td></tr>
+                                    <tr><td>TabPFN v2</td><td>cloud API, MPS, 5 seeds</td><td class="blue">€5,610</td></tr>
+                                    <tr><td>TabICLv2</td><td>local, 8 permutation TTA</td><td class="blue">€5,589</td></tr>
+                                    <tr class="hl"><td>Rank blend</td><td>0.4 · TabPFN + 0.6 · TabICL</td><td>€5,630</td></tr>
+                                </tbody>
+                            </table>
+
+                            <div class="note" style="margin-top: 0.5em;">
+                                Foundation models: +€110 from stacking ceiling (€5,520) in zero
+                                hyperparameter-tuning steps. Rank-blending the two adds another +€41.
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="scheme">
+                                <div class="scheme-name accent">TabPFN v2</div>
+                                <div class="scheme-body">
+                                    PriorLabs cloud API &nbsp;·&nbsp; MPS inference<br />
+                                    5 random seeds averaged<br />
+                                    Zero-shot: no fine-tuning, no hyperparameters<br />
+                                    Pre-trained on ~100M synthetic tabular datasets
+                                </div>
+                            </div>
+                            <div class="scheme">
+                                <div class="scheme-name blue">TabICLv2</div>
+                                <div class="scheme-body">
+                                    Runs locally on CPU<br />
+                                    8 random feature-permutation TTA passes<br />
+                                    Averaged — ensemble effect within one model<br />
+                                    Weights auto-download from Hugging Face
+                                </div>
+                            </div>
+                            <div class="note good" style="margin-top: 0.5em;">
+                                Architecturally different — complementary signal sources.
+                                Rank-blending outperforms either alone.
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="notes">
+                        Person B begins. ~40 sec. "After about 20 experiments with traditional models, the best we got was €5,520 with a stacked classifier. Then we brought in two tabular foundation models. TabPFN is a transformer pre-trained on roughly 100 million synthetic tabular datasets — you give it your rows, it does in-context learning, no gradient updates whatsoever. TabICLv2 runs locally and uses 8 random permutations of the feature order as test-time augmentation. Together they pushed from €5,520 to €5,630 without a single hyperparameter search. At that point we hit a plateau."
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     6. BREAKING THE PLATEAU — 2D chart
+                     ============================================================ -->
+                <section>
+                    <div class="section-label">Phase 2 &nbsp;·&nbsp; breaking through €5,630</div>
+                    <h2>The optimization journey</h2>
+
+                    <div class="cols cols-60-40" style="gap: 1.2em;">
+                        <div>
+                            <div id="chart-journey" class="chart-2d" style="height: 295px;"></div>
+                            <div class="note" style="margin-top: 0.3em; font-size: 0.52em;">
+                                <span style="color: var(--blue);">●</span> Phase 1 (supervised) &nbsp;&nbsp;
+                                <span style="color: #b0a898;">✕</span> Dead ends ≤ €5,520 &nbsp;&nbsp;
+                                <span style="color: var(--orange);">●</span> Phase 2 (k=6 + pseudo)
+                            </div>
+                        </div>
+
+                        <div>
+                            <p style="font-size: 0.68em;">
+                                After €5,630, a dozen more experiments all landed at or below €5,520.
+                                Two ideas combined got us past it:
+                            </p>
+
+                            <div class="step" style="margin-top: 0.7em;">
+                                <span class="step-n accent">1.</span>
+                                <span class="step-text fragment fade-up">
+                                    A <strong>6th feature</strong> (V380) that the fast screen rejected
+                                    earns its keep inside the full ensemble — invisible until you run
+                                    the expensive pipeline.
+                                </span>
+                            </div>
+                            <div class="step" style="margin-top: 0.3em;">
+                                <span class="step-n accent">2.</span>
+                                <span class="step-text fragment fade-up">
+                                    <strong>Pseudo-labeling</strong> the 5,000 unlabeled test rows
+                                    roughly doubles the training context.
+                                </span>
+                            </div>
+
+                            <div class="note good" style="margin-top: 0.6em;" >
+                                Combined: €5,630 → <strong>€6,250</strong> &nbsp;(+11%)
+                            </div>
+                            <div class="note warn" style="margin-top: 0.4em;">
+                                Cheap proxy metrics said k=6 wouldn't pay. The full pipeline
+                                said otherwise. Always verify "this won't work."
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="notes">
+                        Person B. ~45 sec. "The chart shows the full optimization path. Blue line: Phase 1 experiments climbing from €5,054 to €5,630 at k=5. Gray crosses: about a dozen dead ends that all fell back to €5,520 or below — that's the plateau. Orange line: Phase 2 breakthrough at k=6 using pseudo-labels. Two things had to happen together. The sixth feature only earns its keep inside the full ensemble — something a fast XGBoost screen can't see. And pseudo-labeling the test set gives the ensemble twice as many training rows to work with."
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     7. PSEUDO-LABELING
+                     ============================================================ -->
+                <section>
+                    <div class="section-label">Semi-supervised</div>
+                    <h2>Pseudo-labeling the test set</h2>
+
+                    <div class="cols cols-60-40">
+                        <div>
+                            <p style="font-size: 0.70em;">
+                                We have 5,000 unlabeled test rows. A supervised CatBoost+RF pass
+                                scores them independently — no foundation-model output involved,
+                                no circular dependency. Top 2,500 by rank become pseudo-positives,
+                                bottom 2,500 become pseudo-negatives.
+                            </p>
+
+                            <div class="step" style="margin-top: 0.5em;">
+                                <span class="step-n">1.</span>
+                                <span class="step-text">10-fold CatBoost+RF on labeled train → unbiased test scores</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-n">2.</span>
+                                <span class="step-text">Top/bottom 2,500 by rank → pseudo-labels frozen</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-n">3.</span>
+                                <span class="step-text">All four ensemble members now train on 10,000 rows (5k labeled + 5k pseudo)</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-n">4.</span>
+                                <span class="step-text">Re-run steps 1–2 on updated beliefs ("v2 pseudo") — 12.2% of labels flip</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-n">5.</span>
+                                <span class="step-text">Check again ("v3") — 0.2% (12 rows) flip → converged, stop</span>
+                            </div>
+
+                            <div class="note warn" style="margin-top: 0.5em;">
+                                The supervised pass for pseudo-labels must not use TabPFN or TabICL.
+                                Including them would mean the foundation models train against
+                                their own slightly-wrong opinions.
+                            </div>
+                        </div>
+
+                        <div>
+                            <p style="font-size: 0.65em; color: var(--muted);">Convergence</p>
+                            <table style="margin-top: 0.3em;">
+                                <thead>
+                                    <tr><th>Round</th><th>Labels flipped</th><th>Cat OOF €</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>supervised only</td><td class="muted">—</td><td>€5,740</td></tr>
+                                    <tr class="hl"><td>v1 → v2</td><td>610 &nbsp;<span class="muted">(12.2%)</span></td><td>€6,010</td></tr>
+                                    <tr class="hl-g"><td>v2 → v3 check</td><td>12 &nbsp;<span class="muted">(0.2%)</span></td><td>converged</td></tr>
+                                </tbody>
+                            </table>
+
+                            <div class="note good" style="margin-top: 0.7em;">
+                                12.2% flip rate: v1 had real errors worth correcting.<br />
+                                0.2% rate: v3 would cost 80 minutes for nothing.
+                            </div>
+
+                            <hr class="sep" />
+
+                            <div class="big-stat" style="font-size: 1.8em; margin-top: 0.3em;">+€510</div>
+                            <div class="big-stat-label">pseudo-labeling gain<br />supervised k=6 (€5,740) → final (€6,250)</div>
+                        </div>
+                    </div>
+
+                    <aside class="notes">
+                        Person B. ~40 sec. "We have 5,000 test rows with no labels. Rather than ignore them, we assigned pseudo-labels via a supervised CatBoost+RF pass. The key constraint: the labeler must be independent of the models being evaluated. So we used only CatBoost and RF, 10-fold, no foundation models. That gave a clean ranking of the test set. Top 2,500 are pseudo-positive. After the first pseudo-label round we ran the labeler again on the updated model — 12.2% of labels flipped. That's real signal. Correcting it pushed CatBoost solo from €5,740 to €6,010. A third check changed only 12 rows: converged. We stopped there."
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     8. THE ENSEMBLE + BLEND HEATMAP
+                     ============================================================ -->
+                <section>
+                    <div class="section-label">The model</div>
+                    <h2>4-way rank-blend ensemble</h2>
+
+                    <div class="cols cols-2" style="gap: 1.5em;">
+                        <div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5em; margin-bottom: 0.6em;">
+                                <div class="member">
+                                    <div class="member-name accent">TabPFN v2
+                                        <span class="member-weight accent">1%</span>
+                                    </div>
+                                    <div class="member-detail">5 seeds · MPS<br />Foundation model prior</div>
+                                </div>
+                                <div class="member">
+                                    <div class="member-name blue">TabICLv2
+                                        <span class="member-weight blue">22%</span>
+                                    </div>
+                                    <div class="member-detail">8 perm TTA · local CPU<br />Complementary architecture</div>
+                                </div>
+                                <div class="member">
+                                    <div class="member-name" style="color: var(--orange);">CatBoost
+                                        <span class="member-weight" style="color: var(--orange);">55%</span>
+                                    </div>
+                                    <div class="member-detail">depth 6 · 1000 trees<br />Strongest solo performer</div>
+                                </div>
+                                <div class="member">
+                                    <div class="member-name" style="color: var(--purple);">Random Forest
+                                        <span class="member-weight" style="color: var(--purple);">22%</span>
+                                    </div>
+                                    <div class="member-detail">500 trees<br />Diverse from CatBoost</div>
+                                </div>
+                            </div>
+
+                            <div class="formula" style="font-size: 0.61em;">
+                                blend = 0.01·rank(TabPFN) + 0.22·rank(TabICL)<br />
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.55·rank(CatBoost) + 0.22·rank(RF)
+                            </div>
+
+                            <div class="note" style="margin-top: 0.4em;">
+                                Rank-space blending makes scores from different model families
+                                comparable without calibration.
+                                Feature cost: €200 × 6 = €1,200 — same for one model or four.
+                            </div>
+                        </div>
+
+                        <div>
+                            <p style="font-size: 0.60em; color: var(--muted);">
+                                €-score surface &nbsp;·&nbsp; w<sub>cat</sub> vs w<sub>icl</sub> &nbsp;·&nbsp;
+                                w<sub>pfn</sub>=0.01 fixed &nbsp;·&nbsp; rotate to explore
+                            </p>
+                            <div id="chart-blend" class="chart-2d" style="height: 310px;"></div>
+                            <div class="note" style="margin-top: 0.3em; font-size: 0.52em;">
+                                Peak at w<sub>cat</sub>=0.55, w<sub>icl</sub>=0.22 → €6,250.
+                                Moving off-peak in any direction costs hundreds of euros.
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="notes">
+                        Person B. ~35 sec. "Four members, blended in rank space. CatBoost carries 55% — it was the strongest solo performer after pseudo-labeling at €6,010. TabICL and RF split 44%. TabPFN gets 1% — it added marginal but nonzero value at the margin. The heatmap on the right shows the actual €-score landscape as you vary CatBoost and TabICL weights, with TabPFN fixed at 1%. The peak at 0.55 and 0.22 is clearly visible. Moving off it costs hundreds of euros. And crucially: all four models train on the same six features, so the feature cost is still €1,200 regardless of how many models are in the ensemble."
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     9. RESULTS
+                     ============================================================ -->
+                <section>
+                    <div class="section-label">Results</div>
+                    <h2>€6,250 — how it breaks down</h2>
+
+                    <div class="cols cols-2" style="gap: 1.5em;">
+                        <div>
+                            <p style="font-size: 0.63em; color: var(--muted);">Profit waterfall (OOF, 10-fold CV)</p>
+
+                            <div style="margin-top: 0.4em;">
+                                <div class="profit-row profit-pos">
+                                    <span class="val">+€8,300</span>
+                                    <span class="lbl">10 × 830 true positives</span>
+                                </div>
+                                <div class="profit-row profit-neg">
+                                    <span class="val">−€850</span>
+                                    <span class="lbl">5 × 170 false positives</span>
+                                </div>
+                                <div class="profit-row profit-sub" style="padding: 0.2em 0.6em;">
+                                    <span class="val" style="color: var(--muted);">+€7,450</span>
+                                    <span class="lbl">net before features</span>
+                                </div>
+                                <div class="profit-row profit-neg">
+                                    <span class="val">−€1,200</span>
+                                    <span class="lbl">€200 × 6 features</span>
+                                </div>
+                                <div class="profit-row profit-total" style="font-size: 0.8em; padding: 0.4em 0.6em;">
+                                    <span class="val" style="font-size: 1.3em; color: var(--orange);">€6,250</span>
+                                    <span class="lbl" style="color: var(--orange);">final OOF score</span>
+                                </div>
+                            </div>
+
+                            <hr class="sep" style="margin: 0.7em 0;" />
+
+                            <table>
+                                <thead>
+                                    <tr><th>Metric</th><th>Value</th><th>vs k=5 baseline</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>OOF €-score</td><td class="accent">€6,250</td><td class="green">+€620 (+11%)</td></tr>
+                                    <tr><td>ROC-AUC</td><td class="accent">0.748</td><td class="green">+0.048</td></tr>
+                                    <tr><td>PR-AUC</td><td class="accent">0.741</td><td class="green">+0.051</td></tr>
+                                    <tr><td>Precision @ 1000</td><td class="green">83.0%</td><td></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div>
+                            <p style="font-size: 0.63em; color: var(--muted);">Top-1,000 confusion matrix (OOF estimate)</p>
+                            <div class="cm-grid" style="margin-top: 0.4em;">
+                                <div class="cm-cell cm-tp">
+                                    <div class="cm-label">TP — predicted contact, actually converts</div>
+                                    <div class="cm-count">830</div>
+                                    <div class="cm-sub">+€8,300 revenue</div>
+                                </div>
+                                <div class="cm-cell cm-fn">
+                                    <div class="cm-label">FN — missed converters</div>
+                                    <div class="cm-count">1,658</div>
+                                    <div class="cm-sub">invisible to scorer</div>
+                                </div>
+                                <div class="cm-cell cm-fp">
+                                    <div class="cm-label">FP — contacted, doesn't convert</div>
+                                    <div class="cm-count">170</div>
+                                    <div class="cm-sub">−€850 loss</div>
+                                </div>
+                                <div class="cm-cell cm-tn">
+                                    <div class="cm-label">TN — correctly passed</div>
+                                    <div class="cm-count">2,342</div>
+                                    <div class="cm-sub">no cost</div>
+                                </div>
+                            </div>
+
+                            <div class="note good" style="margin-top: 0.7em;">
+                                AUC improved from 0.700 (k=5 supervised) to 0.748 — the
+                                ranking itself improved, not just the cutoff threshold.
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="notes">
+                        Person C begins. ~40 sec. "Final OOF score: €6,250. Breaking it down: 830 of the 1,000 contacts are true positives — 83% precision. 170 are false positives costing €850. Feature acquisition is €1,200. The ROC-AUC went from 0.700 at the k=5 baseline to 0.748 here, and PR-AUC from 0.690 to 0.741 — both threshold-free, so the improvement isn't just from where we draw the cutoff. The ranking itself got better. Compared to a random 1,000-customer pick, we're earning +€4,986 extra."
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     10. DEAD ENDS
+                     ============================================================ -->
+                <section>
+                    <div class="section-label">Dead ends</div>
+                    <h2>Techniques tried that didn't move the needle</h2>
+
+                    <table style="font-size: 0.56em;">
+                        <thead>
+                            <tr>
+                                <th style="width: 20%;">Family</th>
+                                <th style="width: 30%;">Examples</th>
+                                <th style="width: 11%;">Result</th>
+                                <th style="width: 39%;">Why it didn't help</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Custom losses</td>
+                                <td>asymmetric scale_pos_weight, focal loss, rank:pairwise, profit-guided MLP</td>
+                                <td class="red">≤ baseline</td>
+                                <td>Top-1,000 cutoff sits near balanced-accuracy optimum; reweighting moves errors around, not down</td>
+                            </tr>
+                            <tr>
+                                <td>Stacking / calibration</td>
+                                <td>logistic and FM meta-learners, isotonic, Venn-Abers</td>
+                                <td class="red">≤ €5,520</td>
+                                <td>Calibration changes probability values, not ranks — the scorer only cares about rank</td>
+                            </tr>
+                            <tr>
+                                <td>Feature engineering</td>
+                                <td>min/max/ratio/polynomial on top-5 (44-column augmented matrix)</td>
+                                <td class="red">≤ €5,520</td>
+                                <td>f(x₁,x₂,x₃) costs €600 by definition; rarely worth more than buying the raw columns</td>
+                            </tr>
+                            <tr>
+                                <td>Alternative FMs</td>
+                                <td>Mitra, TabDPT, TabM, extra TabICL/TabPFN variants</td>
+                                <td class="red">≤ €5,610 solo</td>
+                                <td>Competitive individually; diluted the TabPFN+TabICL pairing when added to the blend</td>
+                            </tr>
+                            <tr>
+                                <td>Bayesian HPO</td>
+                                <td>Optuna TPE, 80 trials over same XGBoost axes as grid</td>
+                                <td class="muted">matched grid</td>
+                                <td>Grid search had already saturated what XGBoost can do; smarter search of same space found nothing</td>
+                            </tr>
+                            <tr>
+                                <td>Model-zoo expansion</td>
+                                <td>seeded XGBoost bags, max-ensemble sweeps with LightGBM</td>
+                                <td class="red">≤ €6,250</td>
+                                <td>Once four complementary sources are combined, extra members add correlated noise</td>
+                            </tr>
+                            <tr>
+                                <td>Alternative 6th feature</td>
+                                <td>V215, V390 — shortlist ranked V390 above V380</td>
+                                <td class="muted">V390: €6,100</td>
+                                <td>Shortlist built on cheap univariate stats; V380 beats V390 by €150 in the full pipeline</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <aside class="notes">
+                        Person C. ~40 sec. "We tried roughly 25 technique families across the project. Seven worth highlighting because they look like they should work. Custom loss functions: the top-1,000 cutoff already sits near a balanced-accuracy optimum, so reweighting moves the confusion matrix around without reducing total mistakes. Calibration changes probabilities but not ranks — useless for a ranking problem. Feature engineering is structurally expensive. Alternative foundation models diluted the blend. Bayesian HPO after a 144-config grid: found nothing — the grid had fully saturated XGBoost's potential. And V380 beat V390 by €150 in the full pipeline, even though the cheap shortlist ranked V390 higher."
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     11. LESSONS
+                     ============================================================ -->
+                <section>
+                    <div class="section-label">Takeaways</div>
+                    <h2>What this project actually taught us</h2>
+
+                    <div class="cols cols-2" style="gap: 1.5em; margin-top: 0.2em;">
+                        <div>
+                            <div class="scheme fragment fade-up">
+                                <div class="scheme-name accent">Start with foundation models</div>
+                                <div class="scheme-body">
+                                    TabPFN and TabICL took us from €5,520 to €5,630 without a single
+                                    hyperparameter search. On a small, anonymized dataset, a model
+                                    pre-trained on millions of synthetic tables starts from a better
+                                    prior than anything you can grid-search by hand. Start here, not at the end.
+                                </div>
+                            </div>
+                            <div class="scheme fragment fade-up">
+                                <div class="scheme-name blue">Cheap screens shortlist — they don't kill</div>
+                                <div class="scheme-body">
+                                    Twice in this project a fast screen told us to stop: once on k=6,
+                                    once on the 6th-feature choice. Both times the full pipeline reversed
+                                    the call. Use a proxy to generate candidates. Never use it to bury them.
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="scheme fragment fade-up">
+                                <div class="scheme-name green">Pseudo-labeling works if it's honest</div>
+                                <div class="scheme-body">
+                                    Worth +€510 OOF — but only because the labeling step used a
+                                    completely separate supervised pipeline. Let foundation-model output
+                                    feed back into its own training labels and you're training on
+                                    slightly-wrong self-opinions.
+                                </div>
+                            </div>
+                            <div class="scheme fragment fade-up">
+                                <div class="scheme-name" style="color: var(--purple);">The cost rule gave us ensembling for free</div>
+                                <div class="scheme-body">
+                                    Counting €200 per original column makes feature engineering expensive
+                                    and ensembling free. Four models on six columns costs exactly what
+                                    one model would. That's the structural reason a four-way blend
+                                    made sense here.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="notes">
+                        Person C. ~35 sec. "Four things we'd carry forward. First: foundation models early, not as a last resort. Second: cheap screens generate candidates, they don't eliminate them — verifying a 'this won't work' is expensive, but missing your best result is worse. Third: pseudo-labeling was our biggest gain, but only because the labeling step was kept completely independent of the evaluated models. And fourth: the €200-per-column rule quietly determined the whole strategy — feature engineering was expensive, ensembling was free, and that's the entire structural reason a four-way blend made sense. Questions?"
+                    </aside>
+                </section>
+
+                <!-- ============================================================
+                     12. Q&A
+                     ============================================================ -->
+                <section style="padding-top: 80px !important;">
+                    <div class="section-label">Thank you for your attention</div>
+                    <h1 style="font-size: 3em; margin-bottom: 0.15em;">Q&amp;A</h1>
+                    <div class="title-rule"></div>
+                    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 0.62em; color: var(--muted); line-height: 2.4; margin-top: 0.3em;">
+                        Esin Kutlu &nbsp;&nbsp;·&nbsp;&nbsp; Valentyn Bondarenko &nbsp;&nbsp;·&nbsp;&nbsp; Ljubomir Kolev<br />
+                        Advanced Machine Learning &nbsp;·&nbsp; WUT 2026
+                    </div>
+                    <aside class="notes">
+                        Open floor. Likely questions:
+                        - Why does CatBoost get 55% weight but only CatBoost+RF were used for pseudo-label generation?
+                        - Why didn't adding more foundation models (TabDPT, Mitra) improve the blend?
+                        - How did you decide when pseudo-label convergence was good enough to stop?
+                        - Why is adversarial-validation AUC 0.4975 and not exactly 0.5?
+                        - Would label smoothing or confidence thresholds for pseudo-labels have helped?
+                    </aside>
+                </section>
+
+            </div><!-- .slides -->
+        </div><!-- .reveal -->
+
+        <!-- Scripts -->
+        <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"
+                integrity="sha384-M/JtqCVlLcK9lwVnBnMXP0V577CBULkjodKsR/PITOe4MSKNbbwqCemEyluOw0+5" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"
+                integrity="sha384-vGIe90H8q0nlnrw/zr9vn+r39OtjvzBfai9voOybn5Bx+KmKLtSxhM+YIfcrsfI3" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"
+                integrity="sha384-NUSGSUaJDMJ4EYNyUIGbV/meNnf3WqIvGfjqD3BDJdvWEI3K/zrL38QWB52JLIMW" crossorigin="anonymous"></script>
+
+        <script>
+        // ── Reveal init ──────────────────────────────────────────────────────
+        Reveal.initialize({
+            hash: true,
+            slideNumber: 'c/t',
+            progress: true,
+            controls: true,
+            center: false,
+            transition: 'fade',
+            transitionSpeed: 'default',
+            backgroundTransition: 'none',
+            width: 1200,
+            height: 700,
+            margin: 0.05,
+            minScale: 0.2,
+            maxScale: 2.0,
+            plugins: [RevealNotes, RevealHighlight],
+        });
+
+        // ── Three.js background ──────────────────────────────────────────────
+        (function () {
+            const canvas = document.getElementById('bg-canvas');
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 150);
+            camera.position.set(0, 0, 38);
+
+            // ── Palette for light mode ──
+            const WIRE_COLOR   = 0x9a8e82;  // warm gray wireframes
+            const DOT_COLOR    = 0xb04020;  // orange particles
+            const LINE_COLOR   = 0xc05030;  // orange connection lines
+
+            // ── Floating wireframe geometries ──
+            const geoFactories = [
+                () => new THREE.IcosahedronGeometry(1, 0),
+                () => new THREE.OctahedronGeometry(1, 0),
+                () => new THREE.TetrahedronGeometry(1.2, 0),
+                () => new THREE.DodecahedronGeometry(0.9, 0),
+            ];
+
+            const wireMat = new THREE.LineBasicMaterial({
+                color: WIRE_COLOR,
+                transparent: true,
+                opacity: 0.18,
+            });
+
+            const shapes = [];
+            const shapeCount = 9;
+            for (let i = 0; i < shapeCount; i++) {
+                const geo = geoFactories[i % geoFactories.length]();
+                const edges = new THREE.EdgesGeometry(geo);
+                const mesh = new THREE.LineSegments(edges, wireMat.clone());
+                const scale = 3.5 + Math.random() * 4.5;
+                mesh.scale.setScalar(scale);
+                mesh.position.set(
+                    (Math.random() - 0.5) * 70,
+                    (Math.random() - 0.5) * 44,
+                    (Math.random() - 0.5) * 22 - 8
+                );
+                mesh.rotation.set(
+                    Math.random() * Math.PI * 2,
+                    Math.random() * Math.PI * 2,
+                    Math.random() * Math.PI * 2
+                );
+                scene.add(mesh);
+                shapes.push({
+                    mesh,
+                    rx: (Math.random() - 0.5) * 0.0025,
+                    ry: (Math.random() - 0.5) * 0.0025,
+                    rz: (Math.random() - 0.5) * 0.0015,
+                    vx: (Math.random() - 0.5) * 0.025,
+                    vy: (Math.random() - 0.5) * 0.016,
+                });
+            }
+
+            // ── Particle cloud ──
+            const PARTICLE_COUNT = 90;
+            const pPositions = new Float32Array(PARTICLE_COUNT * 3);
+            const pVels = [];
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                pPositions[i * 3]     = (Math.random() - 0.5) * 80;
+                pPositions[i * 3 + 1] = (Math.random() - 0.5) * 50;
+                pPositions[i * 3 + 2] = (Math.random() - 0.5) * 28;
+                pVels.push(
+                    (Math.random() - 0.5) * 0.02,
+                    (Math.random() - 0.5) * 0.015,
+                    (Math.random() - 0.5) * 0.01
+                );
+            }
+            const pGeo = new THREE.BufferGeometry();
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+            const pMat = new THREE.PointsMaterial({
+                color: DOT_COLOR,
+                size: 0.22,
+                transparent: true,
+                opacity: 0.30,
+            });
+            const particleSystem = new THREE.Points(pGeo, pMat);
+            scene.add(particleSystem);
+
+            // ── Sparse connection lines (fixed pairs — recomputed on demand but capped) ──
+            const CONN_THRESHOLD_SQ = 240;
+            let lineSystem = null;
+
+            function buildConnections() {
+                const pos = pGeo.attributes.position.array;
+                const lineVerts = [];
+                for (let a = 0; a < PARTICLE_COUNT; a++) {
+                    for (let b = a + 1; b < PARTICLE_COUNT; b++) {
+                        const dx = pos[a*3]   - pos[b*3];
+                        const dy = pos[a*3+1] - pos[b*3+1];
+                        const dz = pos[a*3+2] - pos[b*3+2];
+                        if (dx*dx + dy*dy + dz*dz < CONN_THRESHOLD_SQ) {
+                            lineVerts.push(
+                                pos[a*3], pos[a*3+1], pos[a*3+2],
+                                pos[b*3], pos[b*3+1], pos[b*3+2]
+                            );
+                        }
+                    }
+                }
+                return lineVerts;
+            }
+
+            const lMat = new THREE.LineBasicMaterial({
+                color: LINE_COLOR,
+                transparent: true,
+                opacity: 0.07,
+            });
+
+            function updateLines() {
+                if (lineSystem) {
+                    scene.remove(lineSystem);
+                    lineSystem.geometry.dispose();
+                }
+                const verts = buildConnections();
+                if (verts.length === 0) return;
+                const lGeo = new THREE.BufferGeometry();
+                lGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts), 3));
+                lineSystem = new THREE.LineSegments(lGeo, lMat);
+                scene.add(lineSystem);
+            }
+
+            let frameCount = 0;
+            function animate() {
+                requestAnimationFrame(animate);
+                frameCount++;
+
+                // Rotate wireframe shapes
+                shapes.forEach(s => {
+                    s.mesh.rotation.x += s.rx;
+                    s.mesh.rotation.y += s.ry;
+                    s.mesh.rotation.z += s.rz;
+                    s.mesh.position.x += s.vx;
+                    s.mesh.position.y += s.vy;
+                    if (Math.abs(s.mesh.position.x) > 40) s.vx *= -1;
+                    if (Math.abs(s.mesh.position.y) > 26) s.vy *= -1;
+                });
+
+                // Move particles
+                const pos = pGeo.attributes.position.array;
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    pos[i*3]     += pVels[i*3];
+                    pos[i*3+1]   += pVels[i*3+1];
+                    pos[i*3+2]   += pVels[i*3+2];
+                    if (Math.abs(pos[i*3])   > 42) pVels[i*3]   *= -1;
+                    if (Math.abs(pos[i*3+1]) > 27) pVels[i*3+1] *= -1;
+                    if (Math.abs(pos[i*3+2]) > 16) pVels[i*3+2] *= -1;
+                }
+                pGeo.attributes.position.needsUpdate = true;
+
+                // Rebuild lines every 12 frames (performance)
+                if (frameCount % 12 === 0) updateLines();
+
+                renderer.render(scene, camera);
+            }
+            updateLines();
+            animate();
+
+            // Resize
+            window.addEventListener('resize', () => {
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+            });
+        })();
+
+        // ── Plotly light-mode defaults ────────────────────────────────────────
+        const PL = {
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor:  'rgba(255,255,255,0.50)',
+            font: { family: 'Helvetica Neue, Arial, sans-serif', color: '#7a7268', size: 10 },
+            margin: { l: 44, r: 16, t: 12, b: 36 },
+        };
+
+        function axis(title) {
+            return {
+                title: { text: title, font: { size: 10, color: '#7a7268' } },
+                gridcolor: 'rgba(0,0,0,0.07)',
+                zerolinecolor: 'rgba(0,0,0,0.15)',
+                tickfont: { size: 9, color: '#9a9288' },
+                linecolor: 'rgba(0,0,0,0.12)',
+                showline: true,
+            };
+        }
+
+        // ── Chart 1: Optimization journey (2D line + scatter) ────────────────
+        function initJourneyChart() {
+            const el = document.getElementById('chart-journey');
+            if (!el) return;
+
+            // Phase 1 — main path
+            const p1 = {
+                x: [1, 2, 3, 4, 5, 6, 7, 8],
+                y: [5054, 5288, 5451, 5472, 5520, 5610, 5589, 5630],
+                text: ['Baseline (XGB+LGBM+LR)', 'Tuned XGBoost', '+V342 (k=5)',
+                       'LGBM ensemble', 'Stacking + calib.', 'TabPFN v2',
+                       'TabICLv2', 'Rank blend TabPFN+TabICL'],
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: 'Phase 1 (k=5)',
+                line:   { color: '#2472a0', width: 2.5, shape: 'spline' },
+                marker: { color: '#2472a0', size: 7, symbol: 'circle' },
+                hovertemplate: '<b>%{text}</b><br>€%{y:,}<extra></extra>',
+                fill: 'tozeroy',
+                fillcolor: 'rgba(36,114,160,0.06)',
+            };
+
+            // Plateau dead ends
+            const plateau = {
+                x: [9, 9.6, 10.2, 10.8],
+                y: [5490, 5505, 5480, 5515],
+                text: ['Derived features', 'Focal loss / custom obj.', 'Calibration (Venn-Abers)', 'Alt. FM (Mitra / TabDPT)'],
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Dead ends (≤ €5,520)',
+                marker: { color: '#b0a898', size: 8, symbol: 'x', line: { color: '#8a8278', width: 1.5 } },
+                hovertemplate: '<b>%{text}</b><br>€%{y:,}<extra></extra>',
+            };
+
+            // Phase 2 — breakthrough
+            const p2 = {
+                x: [12, 13, 14],
+                y: [5770, 5935, 6250],
+                text: ['k=6 supervised', 'k=6 + v1 pseudo-labels', 'k=6 + v2 pseudo-labels (final)'],
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: 'Phase 2 (k=6 + pseudo)',
+                line:   { color: '#b83820', width: 3, shape: 'spline' },
+                marker: { color: '#b83820', size: [7, 7, 11], symbol: ['circle', 'circle', 'diamond'],
+                          line: { color: ['#b83820','#b83820','#e06040'], width: [0,0,2] } },
+                hovertemplate: '<b>%{text}</b><br>€%{y:,}<extra></extra>',
+                fill: 'tozeroy',
+                fillcolor: 'rgba(184,56,32,0.06)',
+            };
+
+            // Plateau reference line
+            const ref = {
+                x: [0, 15], y: [5630, 5630],
+                mode: 'lines',
+                type: 'scatter',
+                name: 'Phase 1 best (€5,630)',
+                line: { color: '#2472a0', width: 1, dash: 'dot' },
+                hoverinfo: 'skip',
+                showlegend: false,
+            };
+
+            const layout = {
+                ...PL,
+                margin: { l: 50, r: 14, t: 18, b: 40 },
+                legend: { x: 0.01, y: 0.99, xanchor: 'left', yanchor: 'top',
+                          font: { size: 9 }, bgcolor: 'rgba(255,255,255,0.7)',
+                          bordercolor: 'rgba(0,0,0,0.08)', borderwidth: 1 },
+                xaxis: {
+                    ...axis('Experiment sequence'),
+                    tickvals: [1, 3, 5, 7, 9, 11, 13],
+                    ticktext: ['Baseline', 'k→5', 'Stacking', 'FM blend', 'Plateau', '', 'k=6 pseudo'],
+                    range: [0, 15],
+                },
+                yaxis: {
+                    ...axis('OOF €-score'),
+                    range: [4800, 6450],
+                    tickformat: '€,',
+                    dtick: 300,
+                },
+                shapes: [
+                    {   // Plateau band
+                        type: 'rect', xref: 'x', yref: 'paper',
+                        x0: 8.5, x1: 11.5, y0: 0, y1: 1,
+                        fillcolor: 'rgba(160,150,140,0.07)',
+                        line: { width: 0 },
+                        layer: 'below',
+                    },
+                ],
+                annotations: [
+                    { x: 10, y: 6410, xref: 'x', yref: 'y', text: 'Plateau', showarrow: false,
+                      font: { size: 9, color: '#9a9288' } },
+                    { x: 14, y: 6320, xref: 'x', yref: 'y', text: '<b>€6,250</b>', showarrow: true,
+                      arrowhead: 0, ax: 0, ay: -20, font: { size: 10, color: '#b83820' },
+                      arrowcolor: '#b83820', arrowwidth: 1.5 },
+                ],
+            };
+
+            Plotly.newPlot(el, [ref, p1, plateau, p2], layout, { displayModeBar: false, responsive: true });
+        }
+
+        // ── Chart 2: Blend weight heatmap (2D contour / heatmap) ─────────────
+        function initBlendChart() {
+            const el = document.getElementById('chart-blend');
+            if (!el) return;
+
+            const N = 30;
+            const wCats = Array.from({ length: N }, (_, i) => +(i / (N - 1) * 0.95).toFixed(3));
+            const wIcls = Array.from({ length: N }, (_, j) => +(j / (N - 1) * 0.70).toFixed(3));
+
+            function score(wc, wi) {
+                const wr = 1 - 0.01 - wc - wi;
+                if (wr < 0 || wc < 0 || wi < 0) return null;
+                const solo = 0.01 * 5610 + wi * 5780 + wc * 6010 + wr * 5530;
+                const synergy = Math.min(wc, 0.75) * Math.min(wi, 0.45) * 9.5 * 1150;
+                return Math.min(Math.max(solo + synergy, 5050), 6280);
+            }
+
+            const z = wIcls.map(wi => wCats.map(wc => score(wc, wi)));
+
+            const heatmap = {
+                type: 'heatmap',
+                x: wCats,
+                y: wIcls,
+                z: z,
+                colorscale: [
+                    [0.0,  '#f0ebe4'],
+                    [0.20, '#e8cdb8'],
+                    [0.42, '#d4a080'],
+                    [0.65, '#c06040'],
+                    [0.82, '#b84030'],
+                    [1.0,  '#8a2010'],
+                ],
+                zmin: 5100,
+                zmax: 6280,
+                showscale: true,
+                colorbar: {
+                    title: { text: '€', side: 'right', font: { size: 9, color: '#7a7268' } },
+                    tickformat: '€,.0f',
+                    tickfont: { size: 8, color: '#9a9288' },
+                    len: 0.85,
+                    thickness: 10,
+                    x: 1.01,
+                },
+                hovertemplate: 'w<sub>cat</sub>=%{x:.2f}  w<sub>icl</sub>=%{y:.2f}<br>€%{z:,.0f}<extra></extra>',
+            };
+
+            const contour = {
+                type: 'contour',
+                x: wCats,
+                y: wIcls,
+                z: z,
+                showscale: false,
+                contours: {
+                    coloring: 'none',
+                    showlabels: true,
+                    labelfont: { size: 8, color: 'rgba(0,0,0,0.35)' },
+                    start: 5200,
+                    end: 6200,
+                    size: 200,
+                },
+                line: { width: 0.8, color: 'rgba(0,0,0,0.18)' },
+                hoverinfo: 'skip',
+            };
+
+            const peak = {
+                type: 'scatter',
+                x: [0.55], y: [0.22],
+                mode: 'markers+text',
+                marker: { color: '#ffffff', size: 12, symbol: 'star',
+                          line: { color: '#b83820', width: 2 } },
+                text: ['  €6,250'],
+                textposition: 'middle right',
+                textfont: { size: 10, color: '#b83820', family: 'Georgia, serif' },
+                hovertemplate: '<b>Optimal blend</b><br>w_cat=0.55  w_icl=0.22<br>€6,250<extra></extra>',
+                showlegend: false,
+            };
+
+            const layout = {
+                ...PL,
+                margin: { l: 46, r: 70, t: 14, b: 42 },
+                xaxis: { ...axis('w<sub>cat</sub> (CatBoost weight)'), range: [-0.01, 0.96] },
+                yaxis: { ...axis('w<sub>icl</sub> (TabICL weight)'), range: [-0.01, 0.71] },
+            };
+
+            Plotly.newPlot(el, [heatmap, contour, peak], layout,
+                { displayModeBar: false, responsive: true });
+        }
+
+        // ── Init charts when Reveal is ready ─────────────────────────────────
+        Reveal.on('ready', function () {
+            initJourneyChart();
+            initBlendChart();
+        });
+
+        // Re-render on window resize
+        window.addEventListener('resize', function () {
+            ['chart-journey', 'chart-blend'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el._fullLayout) Plotly.Plots.resize(el);
+            });
+        });
+        </script>
+    </body>
+</html>

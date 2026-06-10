@@ -29,3 +29,47 @@ Label spreading is similar to label propagation but adds regularization, making 
 ## Effect of Number of Labels
 
 With very few labeled examples, semi-supervised methods can outperform purely supervised training. As the number of labeled examples increases, the advantage of using unlabeled data often decreases.
+
+## Key Formulas
+
+Semi-supervised training labels:
+
+```text
+y_i is known for labeled points
+y_i = -1 or unknown for unlabeled points
+```
+
+Self-training pseudo-label rule:
+
+```text
+assign y_hat_i if max_k P(Y = k | x_i) >= threshold
+```
+
+Graph similarity with RBF weights:
+
+```text
+w_ij = exp(-gamma ||x_i - x_j||^2)
+```
+
+F1 score:
+
+```text
+F1 = 2 * precision * recall / (precision + recall)
+```
+
+ROC AUC:
+
+```text
+AUC = probability that a random positive example receives a higher score
+      than a random negative example
+```
+
+## Hyperparameters and Failure Modes
+
+For self-training, the confidence threshold controls which pseudo-labels are accepted. If the threshold is too low, many wrong pseudo-labels can be added. If it is too high, too few unlabeled points are used.
+
+For label propagation and label spreading, `gamma`, kernel choice, and graph connectivity control how labels move through the dataset. If gamma is too small, the graph is too dense and labels oversmooth. If gamma is too large, the graph becomes too local and labels may not propagate.
+
+For label spreading, `alpha` controls clamping vs smoothing. Strong smoothing can wash out true label boundaries.
+
+Semi-supervised methods rely on the cluster or manifold assumption: nearby points should have similar labels. If this assumption is false, unlabeled data can hurt performance.

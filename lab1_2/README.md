@@ -23,3 +23,41 @@ Naive Bayes is the simplest and most restrictive because it ignores feature depe
 ## Practical Notes
 
 Use Naive Bayes when data are limited or high-dimensional. Use LDA when linear separation is plausible and covariance structures are similar. Use QDA when classes have visibly different covariance patterns and enough observations are available.
+
+## Key Formulas
+
+Bayes rule:
+
+```text
+P(Y = k | X = x) = P(X = x | Y = k) P(Y = k) / P(X = x)
+```
+
+Naive Bayes decision rule:
+
+```text
+y_hat = argmax_k P(Y = k) product_j P(X_j = x_j | Y = k)
+```
+
+LDA discriminant function:
+
+```text
+delta_k(x) = x^T Sigma^(-1) mu_k
+             - 0.5 mu_k^T Sigma^(-1) mu_k
+             + log pi_k
+```
+
+QDA discriminant function:
+
+```text
+delta_k(x) = -0.5 log |Sigma_k|
+             - 0.5 (x - mu_k)^T Sigma_k^(-1) (x - mu_k)
+             + log pi_k
+```
+
+## Hyperparameters and Failure Modes
+
+Naive Bayes usually has few hyperparameters, but smoothing may be needed for discrete features. Without smoothing, unseen feature values can produce zero likelihood and dominate the posterior.
+
+LDA has no main tuning parameter in its basic form, but it depends strongly on the shared covariance estimate. If covariance matrices differ strongly between classes, LDA can underfit.
+
+QDA estimates one covariance matrix per class. If the sample size is small compared with the number of features, covariance estimates can become unstable or singular.

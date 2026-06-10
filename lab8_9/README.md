@@ -27,3 +27,45 @@ XGBoost is an optimized gradient boosting implementation with regularization, sh
 ## Bias and Variance
 
 Bagging and random forests mostly reduce variance. Boosting can reduce bias and variance, but can overfit if the number of iterations is too large or regularization is too weak.
+
+## Key Formulas
+
+AdaBoost weighted error:
+
+```text
+err_m = sum_i w_i I(y_i != f_m(x_i))
+```
+
+AdaBoost classifier weight:
+
+```text
+alpha_m = log((1 - err_m) / err_m)
+```
+
+AdaBoost prediction:
+
+```text
+y_hat = sign(sum_m alpha_m f_m(x))
+```
+
+Gradient boosting additive model:
+
+```text
+F_M(x) = F_0(x) + sum_m nu h_m(x)
+```
+
+Random forest prediction:
+
+```text
+y_hat = majority_vote(tree_1(x), ..., tree_B(x))
+```
+
+## Hyperparameters and Failure Modes
+
+For AdaBoost, important hyperparameters are `n_estimators`, base tree depth, and learning rate if shrinkage is used. Too many iterations or too deep base trees can overfit.
+
+For gradient boosting and XGBoost, important hyperparameters include `n_estimators`, `learning_rate`, `max_depth`, `subsample`, and regularization terms. A large learning rate can overfit quickly. A very small learning rate needs many trees.
+
+For random forests, important hyperparameters include `n_estimators`, `max_features`, `max_depth`, and `min_samples_leaf`. Too few trees gives unstable predictions. Trees that are too shallow can underfit.
+
+If AdaBoost gets a base learner with error 0, its vote weight tends to infinity. If the error is at least 0.5, the learner is not useful in the binary AdaBoost update.
